@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
+
+    <title>Calculator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
+        integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <script>
+        // adapted from https://www.math.ucla.edu/~tom/distributions/normal.html
+        function cdf(x) {   //HASTINGS.  MAX ERROR = .000001
+            var t = 1 / (1 + .2316419 * Math.abs(x));
+            var d = 0.3989423 * Math.exp(-x * x / 2);
+            var prob = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+            if (x > 0) {
+                prob = 1 - prob;
+            }
+            return prob;
+        }
+        function calculate() {
+            let gestational_age_weeks = parseInt($("input[name='input_gestational_age_weeks']").val()) + (parseInt($("input[name='input_gestational_age_days']").val()) / 7);
+            let platelet_result = parseInt($("input[name='input_platelet_result']").val());
+
+            let mean_platelets = 15.92551 + (16.45705 / Math.pow(gestational_age_weeks, 2)) + (-0.0000145 * Math.pow(gestational_age_weeks, 3))
+
+            let sd_platelets = 1.967772 + (-0.0329754 * gestational_age_weeks) + (0.0009768 * Math.pow(gestational_age_weeks, 2))
+
+            let z_score = (Math.sqrt(platelet_result) - mean_platelets) / sd_platelets;
+
+            let percentile = cdf(z_score) * 100;
+            let rounded_percentile = Math.round((percentile + Number.EPSILON) * 100) / 100
+
+            let recommended_action;
+            let level_of_risk;
+            if (percentile < 1) {
+                level_of_risk = "HIGH";
+                recommended_action = "investigation";
+            } else if (percentile >= 2.5) {
+                level_of_risk = "LOW";
+                recommended_action = "routine monitoring";
+            } else {
+                level_of_risk = "MEDIUM";
+                recommended_action = "increased monitoring";
+            }
+            $("#recommended_action").text(recommended_action);
+            $("#level_of_risk").text(level_of_risk);
+            $("#percentile").text(rounded_percentile);
+        }
+        function show_results() {
+            $("#results").show();
+        }
+
+        $(function () {
+            $("#results").hide();
+            $("#calculate").on("click", function (e) {
+                calculate();
+                show_results();
+            });
+            $("input").on("keyup", function (e) {
+                if (event.keyCode == 13) {
+                    e.preventDefault();
+                    calculate();
+                    show_results();
+                }
+            });
+        });
+    </script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+
+        header {
+            text-align: center;
+            height: 50px;
+        }
+
+        section {
+            border: 1px solid black;
+        }
+
+        /* .submit {
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100%;
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .submit-panel {
+            position: absolute;
+            right: 0;
+            width: 100%;
+            height: 100%
+        } */
+
+        hidden {
+            display: none;
+        }
+
+        @media only screen and (max-width:620px) {
+
+            /* For mobile phones: */
+            .menu,
+            .main,
+            .right {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Calculator</h1>
+    </header>
+    <section id="data">
+        Time since conception:
+        <label for="input_gestational_age_weeks">Weeks:</label>
+        <input name="input_gestational_age_weeks" type="number" min="0" max="52" value="40" />
+        <label for="input_gestational_age_days">Days:</label>
+        <input name="input_gestational_age_days" type="number" min="0" max="6" value="0" />
+        <br />
+        <label for="input_platelet_result">Platelet result:</label>
+        <input name="input_platelet_result" type="number" min="0" value="97" />
+        <span class="submit-panel"><button id="calculate">Calculate</button></span>
+    </section>
+    <section id="results">
+        <details id="calculation">
+            <summary>Calculation</summary>
+            Let \(x\) be the gestational age in weeks:
+            <br />
+            <span id="mean_formula">\(\mu_{platelets} = 15.92551+\frac{16.45705}{x^2}-0.0000145x^3\)</span>
+            <br />
+            <span id="sd_formula">\(\sigma_{platelets} = 1.967772-0.0329754x+0.0009768x^2\)</span>
+            <br />
+            <br />
+            Given that \(Z_{99\%} = 2.326\), and that \(Z_{97.5\%} = 1.960\):
+            <br />
+            <span id="nighty_nineth_centile_formula">\(P_{99\%}\ = (\mu_{platelets} - Z_{99\%} .
+                \sigma_{platelets})^2\)</span>
+            <br />
+            <span id="nighty_nineth_centile_formula">\(P_{97.5\%} = (\mu_{platelets} - Z_{97.5\%} .
+                \sigma_{platelets})^2\)</span>
+            <br />
+            <br />
+            Let \(t\) be the platelet result:
+            <br />
+            \(z = \frac{\sqrt{t}-\mu_{platelets}}{\sigma_{platelets}}\)
+            <br />
+            We can now calculate the percentile using the Normalised Cumulative Distribution Function.
+        </details>
+        <section id="summary">
+            The patient is in percentile <span id="percentile"></span>
+            <br />
+            The patient is at <span id="level_of_risk"></span> risk of thrombocytopaenia at term
+            <br />
+            We recommend <span id="recommended_action"></span>
+        </section>
+</body>
+
+</html>
