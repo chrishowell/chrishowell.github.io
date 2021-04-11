@@ -8,10 +8,7 @@
     <title>Calculator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
-        integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chibi/3.0.9/chibi-min.js"></script>
 
     <script>
         // adapted from https://www.math.ucla.edu/~tom/distributions/normal.html
@@ -25,8 +22,8 @@
             return prob;
         }
         function calculate() {
-            let gestational_age_weeks = parseInt($("input[name='input_gestational_age_weeks']").val()) + (parseInt($("input[name='input_gestational_age_days']").val()) / 7);
-            let platelet_result = parseInt($("input[name='input_platelet_result']").val());
+            let gestational_age_weeks = parseInt($("#input_gestational_age_weeks").val()) + (parseInt($("#input_gestational_age_days").val()) / 7);
+            let platelet_result = parseInt($("#input_platelet_result").val());
 
             let mean_platelets = 15.92551 + (16.45705 / Math.pow(gestational_age_weeks, 2)) + (-0.0000145 * Math.pow(gestational_age_weeks, 3))
 
@@ -41,34 +38,34 @@
             let level_of_risk;
             if (percentile < 1) {
                 level_of_risk = "HIGH";
-                recommended_action = "investigation";
+                $("#low_risk_recommendation").hide();
+                $("#medium_risk_recommendation").hide();
+                $("#high_risk_recommendation").show();
             } else if (percentile >= 2.5) {
                 level_of_risk = "LOW";
-                recommended_action = "routine monitoring";
+                $("#low_risk_recommendation").show();
+                $("#medium_risk_recommendation").hide();
+                $("#high_risk_recommendation").hide();
             } else {
                 level_of_risk = "MEDIUM";
-                recommended_action = "increased monitoring";
+                $("#low_risk_recommendation").hide();
+                $("#medium_risk_recommendation").show();
+                $("#high_risk_recommendation").hide();
             }
-            $("#recommended_action").text(recommended_action);
-            $("#level_of_risk").text(level_of_risk);
-            $("#percentile").text(rounded_percentile);
+            $("#level_of_risk").html(level_of_risk);
+            $("#percentile").html(rounded_percentile.toString());
         }
         function show_results() {
             $("#results").show();
         }
 
-        $(function () {
+        $().ready(function () {
             $("#results").hide();
-            $("#calculate").on("click", function (e) {
+
+            $("#data_input").on("submit", function (e) {
+                e.preventDefault();
                 calculate();
                 show_results();
-            });
-            $("input").on("keyup", function (e) {
-                if (event.keyCode == 13) {
-                    e.preventDefault();
-                    calculate();
-                    show_results();
-                }
             });
         });
     </script>
@@ -78,95 +75,182 @@
             font-family: 'Noto Sans JP', sans-serif;
         }
 
+        h1 {
+            margin-top: 0;
+        }
+
+        body {
+            line-height: 1.5;
+        }
+
         header {
             text-align: center;
-            height: 50px;
         }
 
-        section {
-            border: 1px solid black;
-        }
-
-        /* .submit {
-            position: absolute;
-            right: 0;
-            top: 0;
-            height: 100%;
-            border-top-left-radius: 0;
-            border-bottom-left-radius: 0;
-            border-bottom-right-radius: 0;
-        }
-
-        .submit-panel {
-            position: absolute;
-            right: 0;
+        input[type="number"],
+        fieldset {
             width: 100%;
-            height: 100%
-        } */
+            border: 1px solid #333;
+        }
 
-        hidden {
-            display: none;
+        p>label {
+            display: block;
+        }
+
+        .outer-container {
+            max-width: 1280px;
+            margin-right: auto;
+            margin-left: auto;
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .inner-container {
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+
+        .inner-l-container {
+            width: 75%;
+        }
+
+        .inner-r-container {
+            width: 25%;
         }
 
         @media only screen and (max-width:620px) {
 
             /* For mobile phones: */
-            .menu,
-            .main,
-            .right {
+            .inner-l-container,
+            .inner-r-container {
                 width: 100%;
             }
+
+            header {
+                font-size: 0.5em;
+            }
+        }
+
+        #calculator {
+            border: 1px solid black;
+            padding: 0px 20px 10px 20px;
+            margin-top: 10px;
+        }
+
+        /* 
+        .inner-l-container {
+            width: 100%;
+        }
+
+        .inner-r-container {
+            width: 100%;
+        } */
+
+        fieldset {
+            margin: 0;
+            padding: 10px;
+        }
+
+        button {
+            width: 100%;
+            height: 30px;
+        }
+
+        input:invalid {
+            box-shadow: 0 0 5px 1px red;
+        }
+
+        input:focus:invalid {
+            box-shadow: none;
         }
     </style>
 </head>
 
 <body>
-    <header>
-        <h1>Calculator</h1>
+    <header class="header">
+        <h1>Ox-PPP (Oxford Pregnancy Parameters Project)</h1>
     </header>
-    <section id="data">
-        Time since conception:
-        <label for="input_gestational_age_weeks">Weeks:</label>
-        <input name="input_gestational_age_weeks" type="number" min="0" max="52" value="40" />
-        <label for="input_gestational_age_days">Days:</label>
-        <input name="input_gestational_age_days" type="number" min="0" max="6" value="0" />
-        <br />
-        <label for="input_platelet_result">Platelet result:</label>
-        <input name="input_platelet_result" type="number" min="0" value="97" />
-        <span class="submit-panel"><button id="calculate">Calculate</button></span>
-    </section>
-    <section id="results">
-        <details id="calculation">
-            <summary>Calculation</summary>
-            Let \(x\) be the gestational age in weeks:
-            <br />
-            <span id="mean_formula">\(\mu_{platelets} = 15.92551+\frac{16.45705}{x^2}-0.0000145x^3\)</span>
-            <br />
-            <span id="sd_formula">\(\sigma_{platelets} = 1.967772-0.0329754x+0.0009768x^2\)</span>
-            <br />
-            <br />
-            Given that \(Z_{99\%} = 2.326\), and that \(Z_{97.5\%} = 1.960\):
-            <br />
-            <span id="nighty_nineth_centile_formula">\(P_{99\%}\ = (\mu_{platelets} - Z_{99\%} .
-                \sigma_{platelets})^2\)</span>
-            <br />
-            <span id="nighty_nineth_centile_formula">\(P_{97.5\%} = (\mu_{platelets} - Z_{97.5\%} .
-                \sigma_{platelets})^2\)</span>
-            <br />
-            <br />
-            Let \(t\) be the platelet result:
-            <br />
-            \(z = \frac{\sqrt{t}-\mu_{platelets}}{\sigma_{platelets}}\)
-            <br />
-            We can now calculate the percentile using the Normalised Cumulative Distribution Function.
-        </details>
-        <section id="summary">
-            The patient is in percentile <span id="percentile"></span>
-            <br />
-            The patient is at <span id="level_of_risk"></span> risk of thrombocytopaenia at term
-            <br />
-            We recommend <span id="recommended_action"></span>
-        </section>
+    <div class="outer-container">
+        <div class="inner-container inner-l-container">
+            <section>
+                <p>
+                    The Ox-PPP calculator provides free, gestational age-adjusted centile for platelets from 6 weeks of
+                    gestation onwards, which may be used to identify women who have, or are at risk of developing
+                    thrombocytopaenia at term.
+                </p>
+                <p>
+                    The results and recommendations are derived from the study by Dockree, at al. (2021) [link TBC] and
+                    should only be used alongside local and national guidance.
+                </p>
+            </section>
+            <section id="calculator">
+                <section id="data">
+                    <form id="data_input">
+                        <section>
+                            <p>
+                            <fieldset>
+                                <legend>Time since conception</legend>
+                                <label for="input_gestational_age_weeks">Weeks</label>
+                                <input id="input_gestational_age_weeks" autofocus required type="number" min="6"
+                                    max="42" value="40" pattern="\d+" />
+                                <label for="input_gestational_age_days">Days</label>
+                                <input id="input_gestational_age_days" required type="number" min="0" max="6" value="0"
+                                    pattern="\d+" />
+                            </fieldset>
+                            </p>
+                            <p>
+                            <fieldset>
+                                <legend>Platelet result</legend>
+                                <input id="input_platelet_result" required type="number" min="1" pattern="\d+" />
+                            </fieldset>
+                            </p>
+                        </section>
+                        <section>
+                            <p>
+                                <button id="calculate">Calculate</button>
+                            </p>
+                        </section>
+                    </form>
+                </section>
+                <section id="results">
+                    <section id="summary">
+                        <p>
+                            This platelet result is on the <span id="percentile"></span>th gestational age-adjusted
+                            centile.
+                        </p>
+                        <p>
+                            The patient has a <span id="level_of_risk"></span> risk of developing clinically significant
+                            thrombocytopaenia at term (&lt;100 x109/L).
+                        </p>
+                        <p>
+                            We recommend <span id="high_risk_recommendation">further investigation and/or referral to
+                                specialist
+                                services</span><span id="medium_risk_recommendation">considering further investigation
+                                and/or
+                                referral
+                                to specialist services</span><span id="low_risk_recommendation">continuing routine
+                                antenatal
+                                monitoring</span>.
+                        </p>
+                    </section>
+                </section>
+            </section>
+            <section>
+                <p>
+                    Platelet centiles may be plotted on the graph attached to augment the diagnosis and/or monitoring of
+                    thrombocytopaenia in pregnancy.
+                </p>
+                <p>
+                    Please cite the following paper in any publications that may result from using Ox-PPP: [citation
+                    TBC]
+                </p>
+            </section>
+        </div>
+        <div class="inner-container inner-r-container">
+            <h1>About</h1>
+            <p>This calculator was developed by Chris Howell, he's amazing</p>
+        </div>
+    </div>
 </body>
 
 </html>
